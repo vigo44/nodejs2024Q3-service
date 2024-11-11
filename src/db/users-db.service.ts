@@ -9,8 +9,8 @@ export class UserDbService {
     return this.users;
   }
 
-  getById(id: string): UserDbDto | undefined {
-    return this.users.find((user) => user.id === id);
+  getById(id: string): UserDbDto | null {
+    return this.users.find((item) => item.id === id) ?? null;
   }
 
   create(user: UserDbDto): UserDbDto {
@@ -18,9 +18,9 @@ export class UserDbService {
     return user;
   }
 
-  update(id: string, updatedUser: UserDbDto): UserDbDto | undefined {
+  update(id: string, updatedUser: UserDbDto): UserDbDto | null {
     const userIndex = this.users.findIndex((item) => item.id === id);
-    if (!userIndex) return null;
+    if (!~userIndex) return null;
 
     this.users[userIndex] = updatedUser;
     return this.users[userIndex];
@@ -28,7 +28,7 @@ export class UserDbService {
 
   delete(id: string) {
     const userIndex = this.users.findIndex((item) => item.id === id);
-    if (userIndex === -1) return null;
+    if (!~userIndex) return null;
     this.users.splice(userIndex, 1);
   }
 }
