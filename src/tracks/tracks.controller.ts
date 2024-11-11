@@ -3,12 +3,12 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  Put,
 } from '@nestjs/common';
 import { TracksService } from './tracks.service';
 import { TrackDto } from './dto/track.dto';
@@ -32,7 +32,7 @@ export class TracksController {
     return this.tracksService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateTrackDto: TrackDto,
