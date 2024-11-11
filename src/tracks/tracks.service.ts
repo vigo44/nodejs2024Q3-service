@@ -38,6 +38,6 @@ export class TracksService {
   remove(id: string) {
     this.findOne(id);
     this.db.tracksDbService.delete(id);
-    this.db.favoritesDbService.deleteArtist(id);
+    this.db.favoritesDbService.deleteTrack(id);
   }
 }
