@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    restart: always
+    ports:
+      - '${PORT}:${PORT}'
+    environment:
+      - PORT
+    volumes:
+      - .:/app
+    networks:
+      - app
+    depends_on:
+      - pgdb
+
+  pgdb:
+    image: postgres:13-alpine
+    container_name: pgdb
+    restart: always
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+    volumes:
+      - pgdb_data:/var/lib/postgresql/data
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge
+
+volumes:
+  pgdb_data:
