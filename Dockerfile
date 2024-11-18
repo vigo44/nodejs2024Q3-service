@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY package*.json .
 
-RUN --mount=type=cache,target=/root/.npm npm ci && npm cache clean --force
+RUN --mount=type=cache,target=/root/.npm npm ci 
 
 COPY . .
 
@@ -16,18 +16,22 @@ WORKDIR /app
 
 COPY package*.json .
 
-RUN --mount=type=cache,target=/root/.npm npm ci --only=production && npm cache clean --force
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
 FROM node:22-alpine
 
 WORKDIR /app
 
-COPY --from=build-prod /app/node_modules /app/node_modules
+COPY --from=build /app/node_modules /app/node_modules
 
 COPY --from=build /app/dist /app/dist
 
 COPY ./doc ./doc
 
+COPY ./prisma ./prisma
+
 EXPOSE $PORT
 
-ENTRYPOINT ["node", "dist/main" ]
+RUN npx prisma generate 
+
+CMD ["node", "dist/main"]

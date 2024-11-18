@@ -1,5 +1,23 @@
 version: '3.8'
 services:
+  pgdb:
+    image: postgres:13-alpine
+    container_name: pgdb
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+    volumes:
+      - pgdb_data:/var/lib/postgresql/data
+      - postgres_logs:/logs
+    networks:
+      - app-network
+
   app:
     build:
       context: .
@@ -9,30 +27,25 @@ services:
     ports:
       - '${PORT}:${PORT}'
     environment:
+      - DATABASE_URL
       - PORT
-    volumes:
-      - .:/app
-    networks:
-      - app
-    depends_on:
-      - pgdb
-
-  pgdb:
-    image: postgres:13-alpine
-    container_name: pgdb
-    restart: always
-    environment:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
       - POSTGRES_DB
-    volumes:
-      - pgdb_data:/var/lib/postgresql/data
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+    # volumes:
+    #   - .:/app
     networks:
-      - app
+      - app-network
+    depends_on:
+      - pgdb
+    # command: ['npx', 'prisma', 'migrate', 'dev', '&&', 'node', 'dist/main']
 
 networks:
-  app:
+  app-network:
     driver: bridge
 
 volumes:
   pgdb_data:
+  postgres_logs:

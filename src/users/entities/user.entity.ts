@@ -1,11 +1,15 @@
-import { Exclude } from 'class-transformer';
+import { Exclude, Transform } from 'class-transformer';
 
 export class UserEntity {
   id: string;
   login: string;
   version: number;
-  createdAt: number;
-  updatedAt: number;
+
+  @Transform(({ value }) => +value)
+  createdAt: Date;
+
+  @Transform(({ value }) => +value)
+  updatedAt: Date;
 
   @Exclude()
   password: string;
