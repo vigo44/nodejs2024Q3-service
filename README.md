@@ -8,7 +8,7 @@
 ## Downloading
 
 ```
-git clone {repository URL}
+git clone https://github.com/vigo44/nodejs2024Q3-service.git
 ```
 
 ## Installing NPM modules
@@ -26,6 +26,36 @@ npm start
 After starting the app on port (4000 as default) you can open
 in your browser OpenAPI documentation by typing http://localhost:4000/doc/.
 For more information about OpenAPI/Swagger please visit https://swagger.io/.
+
+## Preparing for running application in Docker container
+
+- Add .env file by env.example
+
+- Build conteiners:
+
+```
+npm run docker:build
+```
+
+(If the application does not build for a long time (it is suspended on npm ci) restart it)
+
+- Migration and initialization of the Prisma Client
+
+```
+npm run docker:setup
+```
+
+## Running application in Docker container
+
+```
+npm run docker:start
+```
+
+## Script for vulnerabilities scanning
+
+```
+npm run docker:scan
+```
 
 ## Testing
 
