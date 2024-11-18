@@ -1,45 +1,52 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AlbumDto } from './dto/album.dto';
 import { DbService } from 'src/db/db.service';
-import { v4 as uuid } from 'uuid';
 import { Album } from './entities/album.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AlbumsService {
-  constructor(private readonly db: DbService) {}
+  constructor(private prisma: PrismaService, private readonly db: DbService) {}
 
-  create(createAlbumDto: AlbumDto): Album {
-    const newAlbum = {
-      id: uuid(),
-      ...createAlbumDto,
-    };
-    return this.db.albumsDbService.create(newAlbum);
+  async create(createAlbumDto: AlbumDto): Promise<Album> {
+    const newAlbum = await this.prisma.album.create({
+      data: { ...createAlbumDto },
+    });
+    return newAlbum;
   }
 
-  findAll(): Album[] {
-    return this.db.albumsDbService.getAll();
+  async findAll(): Promise<Album[]> {
+    return await this.prisma.album.findMany();
   }
 
-  findOne(id: string): Album {
-    const album = this.db.albumsDbService.getById(id);
+  async findOne(id: string): Promise<Album> {
+    const album = await this.prisma.album.findUnique({
+      where: { id },
+    });
     if (!album) {
       throw new NotFoundException('Album not found');
     }
     return album;
   }
 
-  update(id: string, updateAlbumDto: AlbumDto): Album {
-    this.findOne(id);
-    return this.db.albumsDbService.update(id, {
-      id,
-      ...updateAlbumDto,
+  async update(id: string, updateAlbumDto: AlbumDto): Promise<Album> {
+    await this.findOne(id);
+    const updateArtist = await this.prisma.album.update({
+      where: { id },
+      data: { ...updateAlbumDto },
     });
+    return updateArtist;
   }
 
-  remove(id: string) {
-    this.findOne(id);
-    this.db.albumsDbService.delete(id);
-    this.db.tracksDbService.deleteAlbumId(id);
+  async remove(id: string) {
+    await this.findOne(id);
+    await this.prisma.album.delete({
+      where: { id },
+    });
+    await this.prisma.track.updateMany({
+      where: { albumId: id },
+      data: { albumId: null },
+    });
     this.db.favoritesDbService.deleteAlbum(id);
   }
 }

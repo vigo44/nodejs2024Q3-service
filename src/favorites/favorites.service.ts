@@ -4,40 +4,59 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { DbService } from 'src/db/db.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class FavoritesService {
-  constructor(private readonly db: DbService) {}
-  findAll() {
+  constructor(private prisma: PrismaService, private readonly db: DbService) {}
+  async findAll() {
     const fav = {
       ...this.db.favoritesDbService.getAll(),
     };
-    const albums = fav.albums.map((item) => {
-      return this.db.albumsDbService.getById(item);
-    });
-    const tracks = fav.tracks.map((item) => {
-      return this.db.tracksDbService.getById(item);
-    });
-    const artists = fav.artists.map((item) => {
-      return this.db.artistsDbService.getById(item);
-    });
+    const albums = await Promise.all(
+      fav.albums.map(async (id) => {
+        return await this.prisma.album.findUnique({
+          where: { id },
+        });
+      }),
+    );
+    const tracks = await Promise.all(
+      fav.tracks.map(async (id) => {
+        return await this.prisma.track.findUnique({
+          where: { id },
+        });
+      }),
+    );
+    const artists = await Promise.all(
+      fav.artists.map(async (id) => {
+        return await this.prisma.artist.findUnique({
+          where: { id },
+        });
+      }),
+    );
     return { artists, albums, tracks };
   }
 
-  createTrack(id: string) {
-    const track = this.db.tracksDbService.getById(id);
+  async createTrack(id: string) {
+    const track = await this.prisma.track.findUnique({
+      where: { id },
+    });
     if (!track) throw new UnprocessableEntityException('Track does not exist');
     this.db.favoritesDbService.addTrack(id);
   }
 
-  createAlbum(id: string) {
-    const album = this.db.albumsDbService.getById(id);
+  async createAlbum(id: string) {
+    const album = await this.prisma.album.findUnique({
+      where: { id },
+    });
     if (!album) throw new UnprocessableEntityException('Album does not exist');
     this.db.favoritesDbService.addAlbum(id);
   }
 
-  createArtist(id: string) {
-    const artist = this.db.artistsDbService.getById(id);
+  async createArtist(id: string) {
+    const artist = await this.prisma.artist.findUnique({
+      where: { id },
+    });
     if (!artist)
       throw new UnprocessableEntityException('Artist does not exist');
     this.db.favoritesDbService.addArtist(id);

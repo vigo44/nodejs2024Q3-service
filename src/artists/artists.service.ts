@@ -1,45 +1,58 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ArtistDto } from './dto/artist.dto';
 import { Artist } from './entities/artist.entity';
-import { v4 as uuid } from 'uuid';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { DbService } from 'src/db/db.service';
 
 @Injectable()
 export class ArtistsService {
-  constructor(private readonly db: DbService) {}
-  create(artistDto: ArtistDto): Artist {
-    const newArtist = {
-      id: uuid(),
-      ...artistDto,
-    };
-    return this.db.artistsDbService.create(newArtist);
+  constructor(private prisma: PrismaService, private readonly db: DbService) {}
+
+  async create(artistDto: ArtistDto): Promise<Artist> {
+    const artist = await this.prisma.artist.create({
+      data: { ...artistDto },
+    });
+    return artist;
   }
 
-  findAll(): Artist[] {
-    return this.db.artistsDbService.getAll();
+  async findAll() {
+    return await this.prisma.artist.findMany();
   }
 
-  findOne(id: string): Artist {
-    const artist = this.db.artistsDbService.getById(id);
+  async findOne(id: string): Promise<Artist> {
+    const artist = await this.prisma.artist.findUnique({
+      where: { id },
+    });
     if (!artist) {
       throw new NotFoundException('Artist not found');
     }
     return artist;
   }
 
-  update(id: string, updateArtistDto: ArtistDto): Artist {
-    this.findOne(id);
-    return this.db.artistsDbService.update(id, {
-      id,
-      ...updateArtistDto,
+  async update(id: string, updateArtistDto: ArtistDto): Promise<Artist> {
+    await this.findOne(id);
+    const updateArtist = await this.prisma.artist.update({
+      where: { id },
+      data: { ...updateArtistDto },
     });
+
+    return updateArtist;
   }
 
-  remove(id: string) {
-    this.findOne(id);
-    this.db.artistsDbService.delete(id);
-    this.db.albumsDbService.deleteArtistId(id);
-    this.db.tracksDbService.deleteArtistId(id);
+  async remove(id: string) {
+    await this.findOne(id);
+    await this.prisma.artist.delete({
+      where: { id },
+    });
+    await this.prisma.album.updateMany({
+      where: { artistId: id },
+      data: { artistId: null },
+    });
+
+    await this.prisma.track.updateMany({
+      where: { artistId: id },
+      data: { artistId: null },
+    });
     this.db.favoritesDbService.deleteArtist(id);
   }
 }

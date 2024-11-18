@@ -14,13 +14,13 @@ import { FavoritesService } from './favorites.service';
 export class FavoritesController {
   constructor(private readonly favoritesService: FavoritesService) {}
   @Get()
-  findAll() {
-    return this.favoritesService.findAll();
+  async findAll() {
+    return await this.favoritesService.findAll();
   }
 
   @Post('track/:id')
-  createTrack(@Param('id', ParseUUIDPipe) id: string) {
-    return this.favoritesService.createTrack(id);
+  async createTrack(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.favoritesService.createTrack(id);
   }
 
   @Delete('track/:id')
@@ -30,8 +30,8 @@ export class FavoritesController {
   }
 
   @Post('album/:id')
-  createAlbum(@Param('id', ParseUUIDPipe) id: string) {
-    return this.favoritesService.createAlbum(id);
+  async createAlbum(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.favoritesService.createAlbum(id);
   }
 
   @Delete('album/:id')
@@ -41,8 +41,8 @@ export class FavoritesController {
   }
 
   @Post('artist/:id')
-  createArtist(@Param('id', ParseUUIDPipe) id: string) {
-    return this.favoritesService.createArtist(id);
+  async createArtist(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.favoritesService.createArtist(id);
   }
 
   @Delete('artist/:id')
