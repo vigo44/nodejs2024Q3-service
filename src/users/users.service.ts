@@ -51,6 +51,19 @@ export class UsersService {
     return user;
   }
 
+  async validateUser(validateUserDto: CreateUserDto): Promise<boolean> {
+    const { login, password } = validateUserDto;
+    const user = await this.prisma.user.findFirst({
+      where: { login },
+    });
+    if (user) {
+      const isPasswordValid = await compare(password, user.password);
+      return isPasswordValid;
+    } else {
+      return false;
+    }
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.findOne(id);
     const { oldPassword, newPassword } = updateUserDto;
