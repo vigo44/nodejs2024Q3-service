@@ -9,17 +9,24 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { v4 as uuid } from 'uuid';
 import { UserEntity } from './entities/user.entity';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { hash, compare } from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async hashPassword(password: string): Promise<string> {
+    const hashedPassword = await hash(password, +process.env.CRYPT_SALT);
+    return hashedPassword;
+  }
+
   async create(createUserDto: CreateUserDto) {
     const { login, password } = createUserDto;
+    const hash = await this.hashPassword(password);
     const newUser = {
       id: uuid(),
       login,
-      password,
+      password: hash,
       version: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -47,15 +54,17 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.findOne(id);
     const { oldPassword, newPassword } = updateUserDto;
-    if (oldPassword !== user.password) {
+    const isPasswordValid = await compare(oldPassword, user.password);
+    if (!isPasswordValid) {
       throw new ForbiddenException('Incorrect old password"');
     }
+    const hashedPassword = await this.hashPassword(newPassword);
     const updateUser = this.prisma.user.update({
       where: { id },
       data: {
         id: user.id,
         login: user.login,
-        password: newPassword,
+        password: hashedPassword,
         version: user.version + 1,
         createdAt: user.createdAt,
         updatedAt: new Date(),
