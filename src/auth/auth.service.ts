@@ -3,30 +3,55 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { SignupDto } from './dto/signup.dto';
 import { UsersService } from 'src/users/users.service';
 import { RefreshTokensDto } from './dto/refreshToken.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
+  ) {}
   async signup(signUpDto: SignupDto) {
     const { login, password } = signUpDto;
-    await this.usersService.create({
+    const { id } = await this.usersService.create({
       login,
       password,
     });
-    return `signup ${login}`;
+    return { id };
   }
 
   async login(loginDto: SignupDto) {
-    const { login } = loginDto;
-    const isValid = await this.usersService.validateUser(loginDto);
-    if (!isValid) {
+    const user = await this.usersService.findUserByLogin(loginDto);
+    if (!user) {
       throw new ForbiddenException('Wrong login or password');
     }
-    return `login ${login}`;
+    const accessToken = await this.createAccessToken(user.id, user.login);
+    // const refreshToken = await this.createRefreshToken(user.id, user.login);
+    return { accessToken };
   }
 
   async refresh(refreshTokensDto: RefreshTokensDto) {
     // todo
     return refreshTokensDto;
+  }
+
+  private async createAccessToken(userId: string, login: string) {
+    return this.jwtService.signAsync(
+      { userId, login },
+      {
+        secret: process.env.JWT_SECRET_KEY,
+        expiresIn: process.env.TOKEN_EXPIRE_TIME,
+      },
+    );
+  }
+
+  private async createRefreshToken(userId: string, login: string) {
+    return this.jwtService.signAsync(
+      { userId, login },
+      {
+        secret: process.env.JWT_SECRET_REFRESH_KEY,
+        expiresIn: process.env.TOKEN_REFRESH_EXPIRE_TIME,
+      },
+    );
   }
 }
