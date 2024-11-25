@@ -26,13 +26,30 @@ export class AuthService {
       throw new ForbiddenException('Wrong login or password');
     }
     const accessToken = await this.createAccessToken(user.id, user.login);
-    // const refreshToken = await this.createRefreshToken(user.id, user.login);
-    return { accessToken };
+    const refreshToken = await this.createRefreshToken(user.id, user.login);
+    return { accessToken, refreshToken };
   }
 
   async refresh(refreshTokensDto: RefreshTokensDto) {
-    // todo
-    return refreshTokensDto;
+    const { refreshToken } = refreshTokensDto;
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_SECRET_REFRESH_KEY,
+      });
+
+      const accessToken = await this.createAccessToken(
+        payload.userId,
+        payload.login,
+      );
+      const newRefreshToken = await this.createRefreshToken(
+        payload.userId,
+        payload.login,
+      );
+
+      return { accessToken, refreshToken: newRefreshToken };
+    } catch {
+      throw new ForbiddenException('Invalid refresh token');
+    }
   }
 
   private async createAccessToken(userId: string, login: string) {

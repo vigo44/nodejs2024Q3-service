@@ -1,8 +1,16 @@
-import { Controller, Post, Body, HttpStatus, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpStatus,
+  HttpCode,
+  UseFilters,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { RefreshTokensDto } from './dto/refreshToken.dto';
 import { Public } from './public.decarator';
+import { HttpExceptionFilter } from './exception.filter';
 
 @Controller('auth')
 export class AuthController {
@@ -23,6 +31,7 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
+  @UseFilters(HttpExceptionFilter)
   @HttpCode(HttpStatus.OK)
   async refresh(@Body() refreshTokenDto: RefreshTokensDto) {
     return await this.authService.refresh(refreshTokenDto);
